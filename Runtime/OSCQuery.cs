@@ -730,7 +730,13 @@ namespace OSCQuery
                             break;
 
                         case "System.Boolean":
-                            data = ((int)msg.Data[0] == 1);
+                            if(msg.Data[0] is bool) data = (bool)msg.Data[0];
+                            else if (msg.Data[0] is int) data = ((int)msg.Data[0] != 0);
+                            else if (msg.Data[0] is float) data = (Mathf.Abs((float)msg.Data[0]) > 0.0001f);
+                            else if (msg.Data[0] is double) data = (Mathf.Abs((float)(double)msg.Data[0]) > 0.0001f);
+                            else if (msg.Data[0] is string) data = ((string)msg.Data[0]).ToLower() == "true" || (string)msg.Data[0] == "1";
+                            else
+                                data = ((int)msg.Data[0] == 1);
                             break;
 
                         case "System.Int32":

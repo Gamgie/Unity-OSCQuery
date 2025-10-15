@@ -26,193 +26,207 @@ using System.Text;
 
 namespace OSCQuery.UnityOSC
 {
-	public sealed class OSCMessage : OSCPacket
-	{
-		#region Constructors
-		public OSCMessage (string address)
-		{
-			_typeTag = DEFAULT.ToString();
-			this.Address = address;
-		}
-		
-		public OSCMessage (string address, object msgvalue)
-		{
-			_typeTag = DEFAULT.ToString();
-			this.Address = address;
-			Append(msgvalue);
-		}
-		#endregion
-		
-		#region Member Variables
-		private const char INTEGER = 'i';
-		private const char FLOAT   = 'f';
-		private const char LONG	   = 'h';
-		private const char DOUBLE  = 'd';
-		private const char STRING  = 's';
-		private const char BYTE    = 'b';
-		private const char COLOR    = 'r';
-		private const char DEFAULT = ',';
-		
-		private string _typeTag;
-		
-		#endregion
-		
-		#region Properties
-		#endregion
-	
-		#region Methods
+    public sealed class OSCMessage : OSCPacket
+    {
+        #region Constructors
+        public OSCMessage(string address)
+        {
+            _typeTag = DEFAULT.ToString();
+            this.Address = address;
+        }
 
-		/// <summary>
-		/// Specifies if the message is an OSC bundle.
-		/// </summary>
-		/// <returns>
-		/// A <see cref="System.Boolean"/>
-		/// </returns>
-		override public bool IsBundle() { return false; }
-		
-		/// <summary>
-		/// Packs the OSC message to binary data.
-		/// </summary>
-		override public void Pack() 
-		{	
-			List<byte> data = new List<byte>();
+        public OSCMessage(string address, object msgvalue)
+        {
+            _typeTag = DEFAULT.ToString();
+            this.Address = address;
+            Append(msgvalue);
+        }
+        #endregion
 
-			data.AddRange(OSCPacket.PackValue(_address));
-			OSCPacket.PadNull(data);
+        #region Member Variables
+        private const char TRUE = 'T';
+        private const char FALSE = 'F';
+        private const char INTEGER = 'i';
+        private const char FLOAT = 'f';
+        private const char LONG = 'h';
+        private const char DOUBLE = 'd';
+        private const char STRING = 's';
+        private const char BYTE = 'b';
+        private const char COLOR = 'r';
+        private const char DEFAULT = ',';
 
-			data.AddRange(OSCPacket.PackValue(_typeTag));
-			OSCPacket.PadNull(data);
+        private string _typeTag;
 
-			foreach (object value in _data)
-			{
-				data.AddRange(OSCPacket.PackValue(value));
-				if (value is string || value is byte[])
-				{
-					OSCPacket.PadNull(data);
-				}
-			}
+        #endregion
 
-			this._binaryData = data.ToArray();
-		}
-		
-		/// <summary>
-		/// Unpacks an OSC message.
-		/// </summary>
-		/// <param name="data">
-		/// A <see cref="System.Byte[]"/>
-		/// </param>
-		/// <param name="start">
-		/// A <see cref="System.Int32"/>
-		/// </param>
-		/// <returns>
-		/// A <see cref="OSCMessage"/>
-		/// </returns>
-		public static OSCMessage Unpack(byte[] data, ref int start)
-		{
-			string address = OSCPacket.UnpackValue<string>(data, ref start);
-			OSCMessage message = new OSCMessage(address);
+        #region Properties
+        #endregion
 
-			char[] tags = OSCPacket.UnpackValue<string>(data, ref start).ToCharArray();
-			foreach (char tag in tags)
-			{
-				object value;
-				switch (tag)
-				{
-					case DEFAULT:
-						continue;
+        #region Methods
 
-					case INTEGER:
-						value = OSCPacket.UnpackValue<int>(data, ref start);
-						break;
+        /// <summary>
+        /// Specifies if the message is an OSC bundle.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.Boolean"/>
+        /// </returns>
+        override public bool IsBundle() { return false; }
 
-					case LONG:
-						value = OSCPacket.UnpackValue<long>(data, ref start);
-						break;
+        /// <summary>
+        /// Packs the OSC message to binary data.
+        /// </summary>
+        override public void Pack()
+        {
+            List<byte> data = new List<byte>();
 
-					case FLOAT:
-						value = OSCPacket.UnpackValue<float>(data, ref start);
-						break;
+            data.AddRange(OSCPacket.PackValue(_address));
+            OSCPacket.PadNull(data);
 
-					case DOUBLE:
-						value = OSCPacket.UnpackValue<double>(data, ref start);
-						break;
+            data.AddRange(OSCPacket.PackValue(_typeTag));
+            OSCPacket.PadNull(data);
 
-					case STRING:
-						value = OSCPacket.UnpackValue<string>(data, ref start);
-						break;
+            foreach (object value in _data)
+            {
+                data.AddRange(OSCPacket.PackValue(value));
+                if (value is string || value is byte[])
+                {
+                    OSCPacket.PadNull(data);
+                }
+            }
 
-					case BYTE:
-						value = OSCPacket.UnpackValue<byte[]>(data, ref start);
-						break;
+            this._binaryData = data.ToArray();
+        }
 
-					case COLOR:
-						value = OSCPacket.UnpackValue<UnityEngine.Color>(data, ref start);
-						break;
+        /// <summary>
+        /// Unpacks an OSC message.
+        /// </summary>
+        /// <param name="data">
+        /// A <see cref="System.Byte[]"/>
+        /// </param>
+        /// <param name="start">
+        /// A <see cref="System.Int32"/>
+        /// </param>
+        /// <returns>
+        /// A <see cref="OSCMessage"/>
+        /// </returns>
+        public static OSCMessage Unpack(byte[] data, ref int start)
+        {
+            string address = OSCPacket.UnpackValue<string>(data, ref start);
+            OSCMessage message = new OSCMessage(address);
 
-					default:
-						Console.WriteLine("Unknown tag: " + tag);
-						continue;
-				}
+            char[] tags = OSCPacket.UnpackValue<string>(data, ref start).ToCharArray();
+            foreach (char tag in tags)
+            {
+                object value;
+                switch (tag)
+                {
+                    case DEFAULT:
+                        continue;
 
-				message.Append(value);
-			}
+                    case TRUE:
+                        value = true;
+                        break;
 
-			if(message.TimeStamp == 0)
-			{
-				message.TimeStamp = DateTime.Now.Ticks;
-			}
+                    case FALSE:
+                        value = false;
+                        break;
 
-			return message;
-		}
-		
-		/// <summary>
-		/// Appends a value to an OSC message.
-		/// </summary>
-		/// <param name="value">
-		/// A <see cref="T"/>
-		/// </param>
-		public override void Append<T> (T value)
-		{
-			Type type = value.GetType();
-			char typeTag = DEFAULT;
+                    case INTEGER:
+                        value = OSCPacket.UnpackValue<int>(data, ref start);
+                        break;
 
-			switch (type.Name)
-			{
-				case "Int32":
-					typeTag = INTEGER;
-					break;
+                    case LONG:
+                        value = OSCPacket.UnpackValue<long>(data, ref start);
+                        break;
 
-				case "Int64":
-					typeTag = LONG;
-					break;
+                    case FLOAT:
+                        value = OSCPacket.UnpackValue<float>(data, ref start);
+                        break;
 
-				case "Single":
-					typeTag = FLOAT;
-					break;
+                    case DOUBLE:
+                        value = OSCPacket.UnpackValue<double>(data, ref start);
+                        break;
 
-				case "Double":
-					typeTag = DOUBLE;
-					break;
+                    case STRING:
+                        value = OSCPacket.UnpackValue<string>(data, ref start);
+                        break;
 
-				case "String":
-					typeTag = STRING;
-					break;
+                    case BYTE:
+                        value = OSCPacket.UnpackValue<byte[]>(data, ref start);
+                        break;
 
-				case "Byte[]":
-					typeTag = BYTE;
-					break;
+                    case COLOR:
+                        value = OSCPacket.UnpackValue<UnityEngine.Color>(data, ref start);
+                        break;
 
-				case "Color":
-					typeTag = COLOR;
-					break;
+                    default:
+                        Console.WriteLine("Unknown tag: " + tag);
+                        continue;
+                }
 
-				default:
-					throw new Exception("Unsupported data type : "+type.Name);
-			}
+                message.Append(value);
+            }
 
-			_typeTag += typeTag;
-			_data.Add(value);
-		}
-		#endregion
-	}
+            if (message.TimeStamp == 0)
+            {
+                message.TimeStamp = DateTime.Now.Ticks;
+            }
+
+            return message;
+        }
+
+        /// <summary>
+        /// Appends a value to an OSC message.
+        /// </summary>
+        /// <param name="value">
+        /// A <see cref="T"/>
+        /// </param>
+        public override void Append<T>(T value)
+        {
+            Type type = value.GetType();
+            char typeTag = DEFAULT;
+
+            switch (type.Name)
+            {
+                case "Boolean":
+                    typeTag = (bool)(object)value ? TRUE : FALSE;
+                    break;
+
+                case "Int32":
+                    typeTag = INTEGER;
+                    break;
+
+                case "Int64":
+                    typeTag = LONG;
+                    break;
+
+                case "Single":
+                    typeTag = FLOAT;
+                    break;
+
+                case "Double":
+                    typeTag = DOUBLE;
+                    break;
+
+                case "String":
+                    typeTag = STRING;
+                    break;
+
+                case "Byte[]":
+                    typeTag = BYTE;
+                    break;
+
+                case "Color":
+                    typeTag = COLOR;
+                    break;
+
+                default:
+                    throw new Exception("Unsupported data type : " + type.Name);
+            }
+
+            _typeTag += typeTag;
+            _data.Add(value);
+        }
+        #endregion
+    }
 }
